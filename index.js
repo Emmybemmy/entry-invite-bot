@@ -1,4 +1,6 @@
 const { Client, GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, Events, SlashCommandBuilder, REST, Routes } = require('discord.js');
+const fs = require('fs');
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -32,13 +34,31 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 
-// handle button interaction
+// Button handler (LIMITED TO ONE INVITE PER USER)
 client.on(Events.InteractionCreate, async interaction => {
   if (!interaction.isButton()) return;
   if (interaction.customId !== "one_time_invite") return;
 
+  await interaction.deferReply({ ephemeral: true });
+
+  const userId = interaction.user.id;
+
+  // Read file
+  let usedUsers = [];
   try {
-    // create a 1-use invite
+    usedUsers = JSON.parse(fs.readFileSync('./usedUsers.json', 'utf8'));
+  } catch {
+    usedUsers = [];
+  }
+
+  // If user already received invite
+  if (usedUsers.includes(userId)) {
+    return interaction.editReply({
+      content: "❌ You have already received your one-time invite."
+    });
+  }
+
+  try {
     const targetGuild = await client.guilds.fetch(TARGET_GUILD_ID);
     const channel = await targetGuild.channels.fetch(TARGET_CHANNEL_ID);
 
@@ -48,12 +68,21 @@ client.on(Events.InteractionCreate, async interaction => {
       reason: `One time invite for ${interaction.user.tag}`
     });
 
-    await interaction.user.send(`Here’s your invite:\n${invite.url}`);
-    await interaction.reply({ content: "Invite sent to your DMs!", ephemeral: true });
+    // Save user to file
+    usedUsers.push(userId);
+    fs.writeFileSync('./usedUsers.json', JSON.stringify(usedUsers, null, 2));
+
+    await interaction.user.send(`Here’s your one-time invite:\n${invite.url}`);
+
+    await interaction.editReply({
+      content: "📩 Invite sent to your DMs!"
+    });
 
   } catch (err) {
     console.error(err);
-    await interaction.reply({ content: "Failed to create or DM invite. Check permissions.", ephemeral: true });
+    await interaction.editReply({
+      content: "❌ Failed to create or DM invite. Check permissions."
+    });
   }
 });
 
