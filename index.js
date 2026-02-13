@@ -9,8 +9,8 @@ const client = new Client({
 });
 
 const TOKEN = process.env.TOKEN;      // bot token
-const TARGET_GUILD_ID = "1451303050303115315"; // server to invite into
-const TARGET_CHANNEL_ID = "1465131704334286959"; // a text/voice channel bot can create invites in
+const TARGET_GUILD_ID = "1457819654658719804"; // server to invite into
+const TARGET_CHANNEL_ID = "1468709189168664843"; // a text/voice channel bot can create invites in
 client.once(Events.ClientReady, () => {
   console.log(`Bot ready as ${client.user.tag}`);
 });
